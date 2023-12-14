@@ -1,0 +1,6 @@
+version: '3'
+services:
+  test-rpc-server:
+    image: test_rpc_server:latest
+    ports:
+      - "50051:50051"
