@@ -7,7 +7,7 @@ pub mod hello {
 
 #[tokio::main]
 async fn main () -> Result<(), Box<dyn std::error::Error>> {
-  let mut client: SayClient<tonic::transport::Channel> = SayClient::connect("http://[::1]:50051").await?;
+  let mut client: SayClient<tonic::transport::Channel> = SayClient::connect("http://192.168.49.2:31935").await?;
   let request: tonic::Request<SayRequest> = tonic::Request::new(SayRequest {
     name: "Gin and Tonic".into()
   });

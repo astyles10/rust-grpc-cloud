@@ -22,7 +22,7 @@ impl Say for MySay {
 
 #[tokio::main]
 async fn main () -> Result<(), Box<dyn std::error::Error>> {
-  let addr: std::net::SocketAddr = ":50051".parse()?;
+  let addr: std::net::SocketAddr = "0.0.0.0:50051".parse()?;
   let greeter: MySay = MySay::default();
   Server::builder()
     .add_service(SayServer::new(greeter))

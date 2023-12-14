@@ -1,0 +1,6 @@
+https://sandro-keil.de/blog/docker-daemon-tuning-and-json-file-configuration/
+https://medium.com/@alombarte/setting-up-a-local-kubernetes-cluster-with-insecure-registries-f5aaa34851ae
+https://stackoverflow.com/questions/49674004/docker-repository-server-gave-http-response-to-https-client
+https://www.howtogeek.com/devops/how-to-create-your-own-private-docker-registry/
+https://stackoverflow.com/questions/57167104/how-to-use-local-docker-image-in-kubernetes-via-kubectl
+https://codeburst.io/getting-started-with-kubernetes-deploy-a-docker-container-with-kubernetes-in-5-minutes-eb4be0e96370
