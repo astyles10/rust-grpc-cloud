@@ -15,6 +15,7 @@ docker push localhost:5000/rust-grpc-server
 
 # Need to init and start new container with --insecure-registry if not done before, otherwise https is required
 minikube delete
+# Minikube host IP address defaults to 192.168.49.1 ?
 minikube start --insecure-registry="192.168.49.1:5000"
 
 # Deploy and expose grpc container

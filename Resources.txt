@@ -4,3 +4,5 @@ https://stackoverflow.com/questions/49674004/docker-repository-server-gave-http-
 https://www.howtogeek.com/devops/how-to-create-your-own-private-docker-registry/
 https://stackoverflow.com/questions/57167104/how-to-use-local-docker-image-in-kubernetes-via-kubectl
 https://codeburst.io/getting-started-with-kubernetes-deploy-a-docker-container-with-kubernetes-in-5-minutes-eb4be0e96370
+
+https://stackoverflow.com/questions/52522570/how-to-expose-a-kubernetes-service-on-a-specific-nodeport
