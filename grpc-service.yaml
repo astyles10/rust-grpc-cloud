@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grpc-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: your-grpc-server
+  ports:
+    - name: grpc
+      protocol: TCP
+      port: 50051  # Replace with the port your gRPC server is listening on
+      targetPort: 50051  # Replace with the port your gRPC server is listening on

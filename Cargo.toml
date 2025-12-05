@@ -20,3 +20,11 @@ tonic-build = "0.10.2"
 [[bin]]
   name = "client"
   path = "rpc-client/client.rs"
+
+[[bin]]
+  name = "udp-server"
+  path = "udp-server/main.rs"
+
+[[bin]]
+  name = "udp-client"
+  path = "udp-client/main.rs"
