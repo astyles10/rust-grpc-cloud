@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "proto_example/bar/bar.proto";
+
+package proto_example;
+
+message Foo {
+  int32 int = 1;
+  repeated int32 numbers = 2;
+  string name = 3;
+  google.protobuf.Timestamp timestamp = 4;
+  Bar bar = 5;
+}
+
+message SayRequest {
+  string name = 1;
+}
+
+message SayResponse {
+  string message = 1;
+}
