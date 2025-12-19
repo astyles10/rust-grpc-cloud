@@ -1,22 +1,11 @@
-use protobuf::text_format::print_to_string;
+// use protobuf::text_format::print_to_string;
 use protobuf::{self, Message};
-use std::os::unix::process::{CommandExt, ExitStatusExt};
-use std::path::{absolute, Path, PathBuf};
+use std::os::unix::process::{CommandExt};
+use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus};
 use std::{env, fs, vec};
 
 const DESCRIPTOR_OUTPUT_PATH: &str = "/tmp/pathfinder";
-
-fn get_proto_file_descriptors(proto_dir: &Path) -> protobuf::descriptor::FileDescriptorSet {
-  compile_proto_descriptors(proto_dir);
-  protobuf::descriptor::FileDescriptorSet::new()
-}
-
-fn compile_proto_descriptors(proto_dir: &Path) -> &Path {
-  // Execute script using proto_dir path which outputs to /tmp
-  // https://doc.rust-lang.org/std/process/struct.Command.html
-  proto_dir
-}
 
 fn make_path(file_path: String) -> PathBuf {
   let absolute_path = Command::new("realpath")
@@ -79,55 +68,75 @@ fn find_protos_by_dir(directory: &Path) -> Vec<PathBuf> {
 
 fn generate_proto_desciptors(proto_include_path: &PathBuf, proto_file_paths: Vec<PathBuf>) {
   // protoc -I ./proto <proto-file-path> -o <proto-file-descriptor>.pb --include_imports --include_source_info
-  let mut generated_descriptors: Vec<PathBuf> = Vec::new();
-  for proto_file_path in proto_file_paths {
-    let proto_descriptor_command = Command::new("protoc")
-      .arg("-I")
-      .arg(proto_include_path)
-      .arg(proto_file_path)
-      .args(["-o", DESCRIPTOR_OUTPUT_PATH, "/protofilename.pb", ])
-      .args(["--include_imports", "--include_source_info"])
-      .status();
-    match proto_descriptor_command {
-      // Does not output anything, just need to check the return code
-      Ok(exit_code) => {
-        if exit_code.into_raw() == 0 {
-          let proto_file_result: Result<String, std::io::Error> =
-          std::fs::read_to_string(proto_file_path);
-          let mut proto_fd: protobuf::descriptor::FileDescriptorSet =
-            protobuf::descriptor::FileDescriptorSet::new();
-          proto_fd
-            .merge_from_bytes(res.as_bytes())
-            .expect("Failed to parse proto file");
-          println!("{:?}", proto_fd);
-        } else {
-          println!("protoc failed with exit code {} for {:?}", exit_code, proto_file_path.as_mut_os_str());
+  // let mut generated_descriptors: Vec<PathBuf> = Vec::new();
+  for mut proto_file_path in proto_file_paths {
+    let mut output_file_name = proto_file_path.clone();
+    output_file_name.set_extension("pb");
+    let output_file_name = output_file_name.file_name();
+    if let Some(file_name) = output_file_name {
+      let file_name: std::borrow::Cow<'_, str> = file_name.to_string_lossy();
+      let output_path = format!("{DESCRIPTOR_OUTPUT_PATH}/{file_name}");
+      let proto_descriptor_command: Result<ExitStatus, std::io::Error> = Command::new("protoc")
+        .arg("-I")
+        .arg(proto_include_path)
+        .arg(&proto_file_path)
+        .args(["-o", output_path.as_str()])
+        .args(["--include_imports", "--include_source_info"])
+        .status();
+      match proto_descriptor_command {
+        // Does not output anything, just need to check the return code
+        Ok(exit_code) => {
+          if exit_code.success() {
+            let proto_file_result: Result<String, std::io::Error> =
+              std::fs::read_to_string(&output_path);
+            match proto_file_result {
+              Ok(descriptor_file_contents) => {
+                let mut proto_fd: protobuf::descriptor::FileDescriptorSet =
+                  protobuf::descriptor::FileDescriptorSet::new();
+                proto_fd
+                  .merge_from_bytes(descriptor_file_contents.as_bytes())
+                  .expect("Failed to parse proto file");
+                println!("{:?}", proto_fd);
+              }
+              Err(e) => {
+                println!("Failed to read file {output_path}: {e}");
+              }
+            }
+          } else {
+            println!(
+              "protoc failed with exit code {} for {:?}",
+              exit_code,
+              &proto_file_path.as_mut_os_str()
+            );
+          }
         }
-      },
-      Err(exec_error) => {
-        println!("{}", exec_error);
+        Err(exec_error) => {
+          println!("{}", exec_error);
+        }
       }
     }
   }
 }
 
 fn main() {
-  let make_tmp_dir = Command::new("mkdir").args(["-p", DESCRIPTOR_OUTPUT_PATH]).exec();
-  println!("{}", make_tmp_dir.to_string());
+  let make_tmp_dir = Command::new("mkdir")
+    .args(["-p", DESCRIPTOR_OUTPUT_PATH])
+    .output();
+  println!("{}", str::from_utf8(&make_tmp_dir.expect("Failed to make temp directory").stdout).expect(""));
   // Take in directory(s) from command line
-  let args: Vec<String> = env::args().collect();
-  let proto_dirs = parse_command_line_args(args);
-  for dir in proto_dirs {
-    let path = make_path(dir);
-    // Find all protos in dir
-    let proto_file_paths: Vec<PathBuf> = find_protos_by_dir(&path);
-    generate_proto_desciptors(&path, proto_file_paths);
-    // Create file descriptors for each file
-  }
+  // let args: Vec<String> = env::args().collect();
+  // let proto_dirs = parse_command_line_args(args);
+  // for dir in proto_dirs {
+  //   let path = make_path(dir);
+  //   // Find all protos in dir
+  //   let proto_file_paths: Vec<PathBuf> = find_protos_by_dir(&path);
+  //   generate_proto_desciptors(&path, proto_file_paths);
+  //   // Create file descriptors for each file
+  // }
 
   // Take in file/directory path from GUI
   let proto_file = fs::read_to_string(
-    "/home/beefmince/Projects/rust-grpc-cloud/proto-testing/proto/proto_example/test.pb",
+    "/tmp/pathfinder/test.pb",
   )
   .expect("Failed to open file");
   let mut protoo: protobuf::descriptor::FileDescriptorSet =
