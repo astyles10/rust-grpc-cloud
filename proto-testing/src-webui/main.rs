@@ -1,6 +1,5 @@
 // use protobuf::text_format::print_to_string;
 use protobuf::{self, Message};
-use std::os::unix::process::{CommandExt};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus};
 use std::{env, fs, vec};
@@ -68,8 +67,16 @@ fn find_protos_by_dir(directory: &Path) -> Vec<PathBuf> {
 
 fn generate_proto_desciptors(proto_include_path: &PathBuf, proto_file_paths: Vec<PathBuf>) {
   // protoc -I ./proto <proto-file-path> -o <proto-file-descriptor>.pb --include_imports --include_source_info
+  // protoc --proto_path=<proto-file-path> test.proto --descriptor_set_out=test.pb
   // let mut generated_descriptors: Vec<PathBuf> = Vec::new();
   for mut proto_file_path in proto_file_paths {
+    // TODO: I think in here, the directory structure relative to the proto_include_path needs to be maintained when creating
+    // the descriptor files. I.e. Learn exactly how proto files need to be structured for protoc to generate pb files.
+    // cargo run --bin web-pathfinder ./proto/proto_example/bar works
+    // cargo run --bin web-pathfinder ./proto/proto_example does not work
+    // cargo run --bin web-pathfinder ./proto does not work
+    // Additionally need to check for trailing / on proto_include_path
+    println!("Input proto file = {:?}", proto_file_path);
     let mut output_file_name = proto_file_path.clone();
     output_file_name.set_extension("pb");
     let output_file_name = output_file_name.file_name();
@@ -80,8 +87,8 @@ fn generate_proto_desciptors(proto_include_path: &PathBuf, proto_file_paths: Vec
         .arg("-I")
         .arg(proto_include_path)
         .arg(&proto_file_path)
-        .args(["-o", output_path.as_str()])
-        .args(["--include_imports", "--include_source_info"])
+        .args(["--descriptor_set_out", output_path.as_str()])
+        .args(["--include_imports"])
         .status();
       match proto_descriptor_command {
         // Does not output anything, just need to check the return code
@@ -109,9 +116,9 @@ fn generate_proto_desciptors(proto_include_path: &PathBuf, proto_file_paths: Vec
               &proto_file_path.as_mut_os_str()
             );
           }
-        }
-        Err(exec_error) => {
-          println!("{}", exec_error);
+        },
+        Err(e) => {
+          println!("protoc failed: {e}");
         }
       }
     }
@@ -122,27 +129,30 @@ fn main() {
   let make_tmp_dir = Command::new("mkdir")
     .args(["-p", DESCRIPTOR_OUTPUT_PATH])
     .output();
-  println!("{}", str::from_utf8(&make_tmp_dir.expect("Failed to make temp directory").stdout).expect(""));
+  println!("Created output directory /tmp/pathfinder {}", str::from_utf8(&make_tmp_dir.expect("Failed to make temp directory").stdout).expect(""));
   // Take in directory(s) from command line
-  // let args: Vec<String> = env::args().collect();
-  // let proto_dirs = parse_command_line_args(args);
-  // for dir in proto_dirs {
-  //   let path = make_path(dir);
-  //   // Find all protos in dir
-  //   let proto_file_paths: Vec<PathBuf> = find_protos_by_dir(&path);
-  //   generate_proto_desciptors(&path, proto_file_paths);
-  //   // Create file descriptors for each file
-  // }
+  let args: Vec<String> = env::args().collect();
+  let proto_dirs = parse_command_line_args(args);
+  for dir in proto_dirs {
+    let path = make_path(dir);
+    // Find all protos in dir
+    let proto_file_paths: Vec<PathBuf> = find_protos_by_dir(&path);
+    println!("{:?}", proto_file_paths);
+    generate_proto_desciptors(&path, proto_file_paths);
+    // Create file descriptors for each file
+  }
 
   // Take in file/directory path from GUI
-  let proto_file = fs::read_to_string(
-    "/tmp/pathfinder/test.pb",
-  )
-  .expect("Failed to open file");
-  let mut protoo: protobuf::descriptor::FileDescriptorSet =
-    protobuf::descriptor::FileDescriptorSet::new();
-  protoo
-    .merge_from_bytes(proto_file.as_bytes())
-    .expect("Failed to merge from file");
-  println!("{:?}", protoo);
+  // let proto_file = fs::read_to_string(
+  //   "/tmp/pathfinder/bar.pb"
+  //   // "./new_bar.pb"
+  //   // "/tmp/pathfinder/test.pb1"
+  // )
+  // .expect("Failed to open file");
+  // let mut protoo: protobuf::descriptor::FileDescriptorSet =
+  //   protobuf::descriptor::FileDescriptorSet::new();
+  // protoo
+  //   .merge_from_bytes(proto_file.as_bytes())
+  //   .expect("Failed to merge from file");
+  // println!("{:?}", protoo);
 }
